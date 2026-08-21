@@ -1,0 +1,3 @@
+[submodule "submodules/skinny_fs"]
+	path = submodules/skinny_fs
+	url = git@github.com:fl4shk/skinny_fs.git
