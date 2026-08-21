@@ -9,5 +9,7 @@
 Debug/
 Release/
 Build/
+*.wad
+*.lmp
 #doomgeneric
 #doomgeneric.map
