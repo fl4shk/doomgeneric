@@ -686,7 +686,39 @@ static const int _key_map_arr[] = {
 };
 static const size_t _key_map_arr_size = ARR_SIZE(_key_map_arr);
 
-static u32 _joystick_0 = 0x0;
+typedef struct mm_poll_info_pair_t {
+    u32 curr;
+    u32 prev;
+} mm_poll_info_pair_t;
+static mm_poll_info_pair_t _poll_info = {
+    .curr=0u,
+    .prev=0u,
+};
+
+static inline u32 _mm_key_is_down(u32 key) {
+    return (_poll_info.curr & key);
+}
+static inline u32 _mm_key_is_up(u32 key) {
+    return (~_poll_info.curr & key);
+}
+static inline u32 _mm_key_was_down(u32 key) {
+    return (_poll_info.prev & key);
+}
+static inline u32 _mm_key_was_up(u32 key) {
+    return (~_poll_info.prev & key);
+}
+static inline u32 _mm_key_changed(u32 key) {
+    return ((_poll_info.curr ^ _poll_info.prev) & key);
+}
+static inline u32 _mm_key_held(u32 key) {
+    return ((_poll_info.curr & _poll_info.prev) & key);
+}
+static inline u32 _mm_key_fell(u32 key) {
+    return ((_poll_info.curr & ~_poll_info.prev) & key);
+}
+static inline u32 _mm_key_rose(u32 key) {
+    return ((~_poll_info.curr & _poll_info.prev) & key);
+}
 
 #define KEYQUEUE_SIZE 16
 
@@ -722,39 +754,73 @@ int DG_GetKey(int* pressed, unsigned char* doomKey) {
 		return 1;
 	}
 }
+static inline void _mm_handle_poll_info(void) {
+    _poll_info.prev = _poll_info.curr;
+    _poll_info.curr = *_melted_moon_poll_info;
+
+    for (u32 key_idx=0u; key_idx<_key_map_arr_size; ++key_idx) {
+        const u32 mask = 1u << key_idx;
+        //if (
+        //) {
+        //}
+        //if (
+        //    //temp_poll_info & mask
+        //    (!(_joystick_0 & mask))
+        //    && (temp_poll_info & mask)
+        //) {
+        //    addKeyToQueue(1, key_idx);
+        //} else if (
+        //    (_joystick_0 & mask)
+        //    && (!(temp_poll_info & mask))
+        //) {
+        //    addKeyToQueue(0, key_idx);
+        //}
+        if (_mm_key_fell(mask)) {
+            addKeyToQueue(1, key_idx);
+        } else if (_mm_key_rose(mask)) {
+            addKeyToQueue(0, key_idx);
+        }
+    }
+
+    *_melted_moon_poll_info = 0xffffffffu; //_poll_info.curr;
+}
 
 void DG_DrawFrame() {
     _my_set_rgb888_palette();
 
-    #ifdef MELTED_MOON_HAVE_POLL_INFO
-    u32 temp_poll_info = *_melted_moon_poll_info;
-    if ((temp_poll_info & ((1u << _key_map_arr_size) - 1u)) != 0x0u) {
-        for (u32 key_idx=0u; key_idx<_key_map_arr_size; ++key_idx) {
-            const u32 mask = 1u << key_idx;
-            if (
-                //temp_poll_info & mask
-                (!(_joystick_0 & mask))
-                && (temp_poll_info & mask)
-            ) {
-                addKeyToQueue(1, key_idx);
-            } else if (
-                (_joystick_0 & mask)
-                && (!(temp_poll_info & mask))
-            ) {
-                addKeyToQueue(0, key_idx);
-            }
-        }
-    } 
-    _joystick_0 = temp_poll_info & ((1u << _key_map_arr_size) - 1u);
+    //#ifdef MELTED_MOON_HAVE_POLL_INFO
+    //if ((_poll_info.curr & ((1u << _key_map_arr_size) - 1u)) != 0x0u) {
+    //for (u32 key_idx=0u; key_idx<_key_map_arr_size; ++key_idx) {
+    //    const u32 mask = 1u << key_idx;
+    //    //if (
+    //    //    //temp_poll_info & mask
+    //    //    (!(_joystick_0 & mask))
+    //    //    && (temp_poll_info & mask)
+    //    //) {
+    //    //    addKeyToQueue(1, key_idx);
+    //    //} else if (
+    //    //    (_joystick_0 & mask)
+    //    //    && (!(temp_poll_info & mask))
+    //    //) {
+    //    //    addKeyToQueue(0, key_idx);
+    //    //}
+    //}
+    //}
+    //_joystick_0 = temp_poll_info & ((1u << _key_map_arr_size) - 1u);
 
-    *_melted_moon_poll_info = temp_poll_info;
-    if (temp_poll_info & (1u << 31u)) { // are we already in VBlank?
-    } else {
-        while (!((temp_poll_info = *_melted_moon_poll_info) & (1u << 31u))) { // wait for VBlank
-            printf("");
-        }
-        *_melted_moon_poll_info = 1u << 31u;
-    }
+    //*_melted_moon_poll_info = temp_poll_info;
+    //if (temp_poll_info & (1u << 31u)) { // are we already in VBlank?
+    //} else {
+    //    while (!((_poll_info.curr = *_melted_moon_poll_info) & (1u << 31u))) { // wait for VBlank
+    //        printf("");
+    //    }
+    //    *_melted_moon_poll_info = 1u << 31u;
+    //}
+    //#endif      // MELTED_MOON_HAVE_POLL_INFO
+    //u32 temp_poll_info = _poll_info.curr;
+
+    #ifdef MELTED_MOON_HAVE_POLL_INFO
+    _mm_handle_poll_info();
     #endif      // MELTED_MOON_HAVE_POLL_INFO
 
     *_melted_moon_fb_page = (u32)_which_frame;
