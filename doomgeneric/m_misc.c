@@ -57,7 +57,8 @@ void M_MakeDirectory(char *path)
 #ifdef _WIN32
     mkdir(path);
 #else
-    mkdir(path, 0755);
+    // `skinny_fs` doesn't *directly* support directories
+    //mkdir(path, 0755);
 #endif
 }
 
@@ -101,6 +102,7 @@ long M_FileLength(FILE *handle)
 
     // go back to the old location
     fseek(handle, savedpos, SEEK_SET);
+
 
     return length;
 }

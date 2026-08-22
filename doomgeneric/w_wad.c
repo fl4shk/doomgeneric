@@ -183,6 +183,22 @@ wad_file_t *W_AddFile (char *filename)
     {
     	// WAD file
         W_Read(wad_file, 0, &header, sizeof(header));
+        char buf[256];
+        char test_header_id[5] = {
+            header.identification[0],
+            header.identification[1],
+            header.identification[2],
+            header.identification[3],
+            '\0',
+        };
+        snprintf(
+            buf, 256, "W_Read: header.identification:\"%x\"\n",
+            *(unsigned*)test_header_id
+        );
+        printf(
+            "%s",
+            buf
+        );
 
 		if (strncmp(header.identification,"IWAD",4))
 		{

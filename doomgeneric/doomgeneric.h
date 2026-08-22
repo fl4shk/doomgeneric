@@ -24,6 +24,10 @@ typedef uint32_t pixel_t;
 #endif  // CMAP256
 
 
+#ifdef MELTED_MOON_RISCV32
+#define FB_0_BASE 0x08000000ul//(1ul << 28ul)//0x0a000000ul//0x4000000ull //0x800000ull //0x1000000ull
+#endif
+
 extern pixel_t* DG_ScreenBuffer;
 
 #ifdef __cplusplus
