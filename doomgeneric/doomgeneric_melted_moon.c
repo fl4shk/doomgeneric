@@ -1,4 +1,5 @@
 #include "doomgeneric.h"
+#include "doomkeys.h"
 #include "i_video.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -282,6 +283,10 @@ extern void my_doom_exit(int code);
 int rename(
     const char* old_filename, const char* new_filename
 ) {
+    //printf(
+    //    "rename(): DEBUG: old:\"%s\" new:\"%s\"\n",
+    //    old_filename, new_filename
+    //);
     return skinny_fs_rename(old_filename, new_filename);
 }
 //
@@ -358,11 +363,12 @@ int rename(
 int mm_doom_putc(char c, FILE* file) {
     (void)file;
     *_melted_moon_dbg_print = c;
+    return (int)c;
 }
 
 int mm_doom_getc(FILE* file) {
     (void)file;
-    return '\0';
+    return (int)'a';
 }
 static FILE __stdio = FDEV_SETUP_STREAM(
     mm_doom_putc,
@@ -416,8 +422,8 @@ int open(const char* path, int flags, ...) {
         //);
         intptr_t ret = (intptr_t)skinny_fs_fopen(path, "r");
         //printf(
-        //    "open(): O_RDONLY: ret:%p\n",
-        //    ret
+        //    "open(): O_RDONLY: ret:%x\n",
+        //    (int)ret
         //);
         return (int)ret;
     } else if (flags == O_WRONLY) {
@@ -425,32 +431,52 @@ int open(const char* path, int flags, ...) {
         //    "open(): O_WRONLY: path:\"%s\"\n",
         //    path
         //);
-        return (intptr_t)skinny_fs_fopen(path, "w");
+        return (int)(intptr_t)skinny_fs_fopen(path, "w");
     } else {
         printf( 
             "open(): eek! %x\n",
             flags
         );
-        return -1;
+        return (int)(-1);
     }
     //return skinny_fs_fopen
 }
 
 int close(int fd) {
     // temporary!
+    //printf(
+    //    "close(): fd:0x%x\n",
+    //    fd
+    //);
     skinny_fs_fclose((void*)(intptr_t)fd);
     return 0;
 };
 
 off_t lseek(int fd, off_t offset, int whence) {
-    return skinny_fs_fseek((void*)(intptr_t)fd, offset, whence);
+    off_t ret = skinny_fs_fseek((void*)(intptr_t)fd, offset, whence);
+    //printf(
+    //    "lseek(): fd:%x offset:%i whence:%i -> ret:%i\n",
+    //    fd, (int)offset, whence, (int)ret
+    //);
+    return ret;
 }
 
 ssize_t read(int fd, void* buf, size_t count) {
-    return skinny_fs_fread((void*)(intptr_t)fd, buf, count);
+    ssize_t ret = skinny_fs_fread((void*)(intptr_t)fd, buf, count);
+    //printf(
+    //    "read(): fd:%x buf:%p count:%u -> ret:%i\n",
+    //    fd, buf, (unsigned)count, (int)ret
+    //);
+    return ret;
 }
 ssize_t write(int fd, void* buf, size_t count) {
-    return skinny_fs_fwrite((void*)(intptr_t)fd, buf, count);
+    //return skinny_fs_fwrite((void*)(intptr_t)fd, buf, count);
+    ssize_t ret = skinny_fs_fwrite((void*)(intptr_t)fd, buf, count);
+    //printf(
+    //    "write(): fd:%x buf:%p count:%u -> ret:%i\n",
+    //    fd, buf, (unsigned)count, (int)ret
+    //);
+    return ret;
 }
 
 void _exit(int status) {
@@ -477,52 +503,155 @@ void DG_SetWindowTitle(const char* title) {
     // do nothing!
 }
 
-int DG_GetKey(int* pressed, unsigned char* doomKey) {
-    return 0;
-}
 
+#define ARR_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+
+
+//#define MELTED_MOON_TICRATE (35u)
+//static inline i32 sleep_ms_helper(void) {
+//    //return (
+//    //    (u32)(*_melted_moon_timer_usec_lo) * 1000u
+//    //);
+//    i32 sec, usec;
+//    i32 newtics;
+//    static i32 basetime = 0;
+//
+//    //doom_gettime(&sec, &usec);
+//    sec = *_melted_moon_timer_sec_lo;
+//    usec = *_melted_moon_timer_usec_lo;
+//    if (!basetime) {
+//        basetime = sec;
+//    }
+//    newtics = (
+//        //(
+//        //    (sec - basetime) * MELTED_MOON_TICRATE + usec * MELTED_MOON_TICRATE / 1000000u
+//        //)
+//
+//        //(sec - basetime) + usec / 1000000u
+//        //((sec - basetime) + usec / 1000000u) // * 1000u
+//        //((sec - basetime)) * 1000u
+//        //* 1000u // multiply by 1000 to convert from seconds to milliseconds
+//        //usec * 1000u
+//        (
+//            (
+//                (sec * 100000)  // convert seconds to microseconds...
+//                + usec          // ...then add `usec`
+//            ) / 1000            // then convert to millseconds...
+//        ) 
+//    );
+//    //printf(
+//    //    "sleep_ms_helper(): basetime:%i sec:%i usec:%i -> newtics:%i\n",
+//    //    basetime, sec, usec, newtics
+//    //);
+//    return newtics;
+//}
 void DG_SleepMs(u32 ms) {
-    u32 basetime = DG_GetTicksMs(); 
+    ////i32 basetime = sleep_ms_helper(); 
 
-    while (basetime - DG_GetTicksMs() < ms) {
-        // sleep!
-        //my_printf("testificate\n");
+    ////i32 temp = 0;
+    ////printf(
+    ////    "(first) DG_SleepMs(ms:%i): basetime:%i temp:%i\n",
+    ////    ms, basetime, temp
+    ////);
+    ////while (((temp = sleep_ms_helper()) - basetime) < ms) {
+    ////    // sleep!
+    ////    //printf("\n");
+    ////    printf(
+    ////        "DG_SleepMs(ms:%i): basetime:%i temp:%i subtract:%i\n",
+    ////        ms, basetime, temp, temp - basetime
+    ////    );
+    ////}
+
+
+    ////return (
+    ////    (u32)(*_melted_moon_timer_usec_lo) * 1000u
+    ////);
+    ////i32 sec, usec;
+    //i32 newtics;
+    //static i32 basetime = 0;
+
+    ////doom_gettime(&sec, &usec);
+    ////sec = *_melted_moon_timer_sec_lo;
+    ////usec = *_melted_moon_timer_usec_lo;
+    ////if (!basetime) {
+    ////    basetime = sec;
+    ////}
+    //basetime = (
+    //    (
+    //        ((*_melted_moon_timer_sec_lo) * 100000)  // convert seconds to microseconds...
+    //        + (*_melted_moon_timer_usec_lo)          // ...then add `usec`
+    //    ) / 1000                                     // then convert to millseconds...
+    //);
+    //while (
+    //    (
+    //        (
+    //            newtics = (
+    //                (
+    //                    ((*_melted_moon_timer_sec_lo) * 100000)  // convert seconds to microseconds...
+    //                    + (*_melted_moon_timer_usec_lo)          // ...then add `usec`
+    //                ) / 1000                                     // then convert to millseconds...
+    //            ) 
+    //        ) - basetime 
+    //    ) < ms //* 1000
+    //) {
+    //    //printf(
+    //    //    "DG_SleepMs(ms:%i): basetime:%i sec:%i usec:%i -> newtics:%i\n",
+    //    //    ms, basetime, sec, usec, newtics
+    //    //);
+    //    //*_melted_moon_dbg_print = '\0';
+    //    //printf("testificate\n");
+    //}
+    ////printf(
+    ////    "sleep_ms_helper(): basetime:%i sec:%i usec:%i -> newtics:%i\n",
+    ////    basetime, sec, usec, newtics
+    ////);
+    ////return newtics;
+
+    ////printf("testificate\n");
+    u32 basetime = DG_GetTicksMs();
+    while ((DG_GetTicksMs() - basetime) < ms) {
+        printf("");
     }
-
-    //printf("testificate\n");
 }
 
-#define MELTED_MOON_TICRATE (35u)
+
+//static u32 _ticks = 0;
 
 u32 DG_GetTicksMs() {
-    //return (
-    //    (u32)(*_melted_moon_timer_usec_lo) * 1000u
+    //_ticks += 3;
+    //++_ticks;
+    //printf(
+    //    "DG_GetTicksMs(): returning %u\n",
+    //    (unsigned)_ticks
     //);
-    u32 sec, usec;
-    u32 newtics;
-    static u32 basetime = 0;
-
-    //doom_gettime(&sec, &usec);
-    sec = *_melted_moon_timer_sec_lo;
-    usec = *_melted_moon_timer_usec_lo;
-    if (!basetime)
-        basetime = sec;
-    newtics = (
+    //return _ticks;
+    //static u32 basetime = 0u;
+    //if (basetime == 0u) {
+    //    basetime = (
+    //        (
+    //            ((*_melted_moon_timer_sec_lo) * 100000u)    // convert seconds to microseconds...
+    //            + (*_melted_moon_timer_usec_lo)             // ...then add `usec`
+    //        )
+    //    );
+    //    return basetime; /// 1000u;                            // then convert to millseconds...
+    //}
+    return (
         (
-            (sec - basetime) * MELTED_MOON_TICRATE + usec * MELTED_MOON_TICRATE / 1000000u
+            (
+                ((*_melted_moon_timer_sec_lo) * 1000000u)   // convert seconds to microseconds...
+                + (*_melted_moon_timer_usec_lo)             // ...then add `usec`
+            ) / 1000u                                       // then convert to millseconds...
         )
-        * 1000u // multiply by 1000 to convert from seconds to milliseconds
     );
-    return newtics;
 }
 
-static bool _which_frame = false;
+static bool _which_frame = true;
 
 extern boolean palette_changed;
 extern struct color colors[256];
 
 static inline void _my_set_rgb888_palette(void) {
-    //if (palette_changed) {
+    if (palette_changed) {
         for (size_t i=0; i<ARR_SIZE(colors); ++i) {
             _melted_moon_pal[i] = (
                 (colors[i].b << 16u)
@@ -530,21 +659,112 @@ static inline void _my_set_rgb888_palette(void) {
                 | (colors[i].r << 0u)
             );
         }
-    //    palette_changed = false;
-    //}
+        palette_changed = false;
+    }
+}
+
+
+// "J1,A,B,X,Y,LT,RT,Select,Start;",
+
+static const int _key_map_arr[] = {
+    //--------
+    KEY_RIGHTARROW,     // button: right
+    KEY_LEFTARROW,      // button: left
+    KEY_DOWNARROW,      // button: down
+    KEY_UPARROW,        // button: up
+    ////--------
+    KEY_FIRE,           // fire gun (button: A)
+    KEY_USE,            // action (open door, press switch, etc.) (button: B)
+    KEY_ENTER,          // menu accept (button: X)
+    KEY_FIRE,           // fire gun (button: Y)
+    //--------
+    KEY_STRAFE_L,       // strafe left (button: LT)
+    KEY_STRAFE_R,       // strafe right (button: RT)
+    //--------
+    KEY_TAB,            // bring up map (button: select)
+    KEY_ESCAPE,         // pause (button: start)
+};
+static const size_t _key_map_arr_size = ARR_SIZE(_key_map_arr);
+
+static u32 _joystick_0 = 0x0;
+
+#define KEYQUEUE_SIZE 16
+
+static unsigned short s_KeyQueue[KEYQUEUE_SIZE];
+static unsigned int s_KeyQueueWriteIndex = 0;
+static unsigned int s_KeyQueueReadIndex = 0;
+
+
+static inline void addKeyToQueue(int pressed, unsigned int keyCode) {
+	//unsigned char key = convertToDoomKey(keyCode);
+	unsigned char key = _key_map_arr[keyCode];
+
+	unsigned short keyData = (pressed << 8) | key;
+
+	s_KeyQueue[s_KeyQueueWriteIndex] = keyData;
+	s_KeyQueueWriteIndex++;
+	s_KeyQueueWriteIndex %= KEYQUEUE_SIZE;
+}
+
+int DG_GetKey(int* pressed, unsigned char* doomKey) {
+	if (s_KeyQueueReadIndex == s_KeyQueueWriteIndex) {
+		//key queue is empty
+
+		return 0;
+	} else {
+		unsigned short keyData = s_KeyQueue[s_KeyQueueReadIndex];
+		s_KeyQueueReadIndex++;
+		s_KeyQueueReadIndex %= KEYQUEUE_SIZE;
+
+		*pressed = keyData >> 8;
+		*doomKey = keyData & 0xFF;
+
+		return 1;
+	}
 }
 
 void DG_DrawFrame() {
     _my_set_rgb888_palette();
 
-    //#ifdef MELTED_MOON_HAVE_POLL_INFO
-    //const u32 temp_poll_info = (*_melted_moon_poll_info);
-    //if (temp_poll_info & (1u << 31u))
-    //#endif      // MELTED_MOON_HAVE_POLL_INFO
-    //{
-        _which_frame = !_which_frame;
-        *_melted_moon_fb_page = (u32)_which_frame;
-    //}
+    #ifdef MELTED_MOON_HAVE_POLL_INFO
+    u32 temp_poll_info = *_melted_moon_poll_info;
+    if ((temp_poll_info & ((1u << _key_map_arr_size) - 1u)) != 0x0u) {
+        for (u32 key_idx=0u; key_idx<_key_map_arr_size; ++key_idx) {
+            const u32 mask = 1u << key_idx;
+            if (
+                //temp_poll_info & mask
+                (!(_joystick_0 & mask))
+                && (temp_poll_info & mask)
+            ) {
+                addKeyToQueue(1, key_idx);
+            } else if (
+                (_joystick_0 & mask)
+                && (!(temp_poll_info & mask))
+            ) {
+                addKeyToQueue(0, key_idx);
+            }
+        }
+    } 
+    _joystick_0 = temp_poll_info & ((1u << _key_map_arr_size) - 1u);
+
+    *_melted_moon_poll_info = temp_poll_info;
+    if (temp_poll_info & (1u << 31u)) { // are we already in VBlank?
+    } else {
+        while (!((temp_poll_info = *_melted_moon_poll_info) & (1u << 31u))) { // wait for VBlank
+            printf("");
+        }
+        *_melted_moon_poll_info = 1u << 31u;
+    }
+    #endif      // MELTED_MOON_HAVE_POLL_INFO
+
+    *_melted_moon_fb_page = (u32)_which_frame;
+    //++_ticks;
+    _which_frame = !_which_frame;
+    if (!_which_frame) {
+        DG_ScreenBuffer = (pixel_t*)FB_0_BASE;
+    } else {
+        DG_ScreenBuffer = (pixel_t*)FB_1_BASE;
+    }
 }
 
 //static inline void my_fb_test_do_it(int argc, char** argv) {
@@ -655,6 +875,8 @@ int main(int argc, char** argv) {
 
     char* my_argv[] = {
         "doom.exe",
+        "-iwad",
+        "doom1.wad",
         //"-timedemo",
         //"DEMO1"
         #ifdef MELTED_MOON_DOOM_TIMEDEMO_3
@@ -713,7 +935,7 @@ int main(int argc, char** argv) {
         skinny_fs_fclose((void*)temp_file);
         //--------
     }
-    DG_ScreenBuffer = (pixel_t*)FB_0_BASE;
+    DG_ScreenBuffer = (pixel_t*)FB_1_BASE;
     ////my_fb_test_do_it(argc, argv);
     doomgeneric_Create(my_argc, my_argv);
 

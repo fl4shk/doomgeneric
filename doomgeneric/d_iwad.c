@@ -34,7 +34,7 @@
 
 static const iwad_t iwads[] =
 {
-    { "doom1.wad",    doom,      shareware,  "Doom I Shareware" },
+    //{ "doom1.wad",    doom,      shareware,  "Doom I Shareware" },
     { "doom2.wad",    doom2,     commercial, "Doom II" },
     { "plutonia.wad", pack_plut, commercial, "Final Doom: Plutonia Experiment" },
     { "tnt.wad",      pack_tnt,  commercial, "Final Doom: TNT: Evilution" },
