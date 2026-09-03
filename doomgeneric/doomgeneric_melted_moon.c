@@ -507,7 +507,7 @@ void DG_SetWindowTitle(const char* title) {
 #define ARR_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
 
-//#define MELTED_MOON_TICRATE (35u)
+#define MELTED_MOON_TICRATE (35u)
 //static inline i32 sleep_ms_helper(void) {
 //    //return (
 //    //    (u32)(*_melted_moon_timer_usec_lo) * 1000u
@@ -545,6 +545,18 @@ void DG_SetWindowTitle(const char* title) {
 //    //);
 //    return newtics;
 //}
+
+static inline u32 get_time_usec(void) {
+    u32 sec0, sec1, usec;
+    do {
+        sec0 = *_melted_moon_timer_sec_lo;
+        usec = *_melted_moon_timer_usec_lo;
+        sec1 = *_melted_moon_timer_sec_lo;
+    } while (sec0 != sec1);
+
+    return (((u32)sec0) * 1000000ull) + usec;
+}
+
 void DG_SleepMs(u32 ms) {
     ////i32 basetime = sleep_ms_helper(); 
 
@@ -608,18 +620,49 @@ void DG_SleepMs(u32 ms) {
     ////return newtics;
 
     ////printf("testificate\n");
-    u32 basetime = DG_GetTicksMs();
-    while ((DG_GetTicksMs() - basetime) < ms) {
-        printf("");
+
+    //u32 basetime = DG_GetTicksMs();
+    const u32 basetime = (
+        get_time_usec()
+        //(
+        //    (
+        //        ((*_melted_moon_timer_sec_lo) * 1000000u)   // convert seconds to microseconds...
+        //        + (*_melted_moon_timer_usec_lo)             // ...then add `usec`
+        //    ) /// 1000u                                       // then convert to millseconds...
+        //)
+    );
+    const u32 num_wait_ticks = ((u32)ms) * 1000ull; 
+    while ((get_time_usec() - basetime) < num_wait_ticks) {
+        asm volatile("nop");
     }
+
+    //while ((DG_GetTicksMs() - basetime) < ms) {
+    //    //printf("");
+    //}
+
+    //while (
+    //    //(DG_GetTicksMs() - basetime) < ms
+    //    (
+    //    (
+    //        (
+    //            ((*_melted_moon_timer_sec_lo) * 1000000u)   // convert seconds to microseconds...
+    //            + (*_melted_moon_timer_usec_lo)             // ...then add `usec`
+    //        ) /// 1000u                                       // then convert to millseconds...
+    //    ) - basetime 
+    //    ) < ms * 1000 // convert to microseconds
+    //) {
+    //    //printf("");
+    //}
 }
 
 
-//static u32 _ticks = 0;
+static u32 _ticks_vblank_cnt = 0;
+static u32 _ticks_fxpt = 0;
 
 u32 DG_GetTicksMs() {
     //_ticks += 3;
     //++_ticks;
+    _ticks_fxpt += 1000;
     //printf(
     //    "DG_GetTicksMs(): returning %u\n",
     //    (unsigned)_ticks
@@ -636,12 +679,23 @@ u32 DG_GetTicksMs() {
     //    return basetime; /// 1000u;                            // then convert to millseconds...
     //}
     return (
-        (
-            (
-                ((*_melted_moon_timer_sec_lo) * 1000000u)   // convert seconds to microseconds...
-                + (*_melted_moon_timer_usec_lo)             // ...then add `usec`
-            ) / 1000u                                       // then convert to millseconds...
-        )
+        //(
+        //    (
+        //        ((*_melted_moon_timer_sec_lo) * 1000000u)   // convert seconds to microseconds...
+        //        + (*_melted_moon_timer_usec_lo)             // ...then add `usec`
+        //    ) / 1000u                                       // then convert to millseconds...
+        //)
+
+        // TODO: see if this works
+        // we need to divide by two in addition to extracting the integer component!
+        //_ticks_fxpt / 1000 //>> 1ul//17ul 
+        //_ticks_fxpt
+
+        //#ifdef MELTED_MOON_HAVE_POLL_INFO
+        //_ticks
+        //#else
+        ((u32)get_time_usec()) / 1000ull
+        //#endif
     );
 }
 
@@ -663,7 +717,6 @@ static inline void _my_set_rgb888_palette(void) {
     }
 }
 
-
 // "J1,A,B,X,Y,LT,RT,Select,Start;",
 
 static const int _key_map_arr[] = {
@@ -678,8 +731,8 @@ static const int _key_map_arr[] = {
     KEY_ENTER,          // menu accept (button: X)
     KEY_FIRE,           // fire gun (button: Y)
     //--------
-    KEY_STRAFE_L,       // strafe left (button: LT)
-    KEY_STRAFE_R,       // strafe right (button: RT)
+    KEY_STRAFE_L,       // strafe left (button: LB)
+    KEY_STRAFE_R,       // strafe right (button: RB)
     //--------
     KEY_TAB,            // bring up map (button: select)
     KEY_ESCAPE,         // pause (button: start)
@@ -782,6 +835,18 @@ static inline void _mm_handle_poll_info(void) {
         }
     }
 
+    //if (!(_poll_info.curr & (1u << 31u))) {
+    //    // we aren't in VBlank yet! poll until we get there!
+    //    while (
+    //        !((*_melted_moon_poll_info) & (1u << 31u))
+    //    ) {
+    //        __asm__ volatile ("nop");
+    //    }
+    //}
+
+    //_ticks += //MELTED_MOON_TICRATE * 2
+    //_ticks = _ticks_fxpt / 1000000ull;
+
     *_melted_moon_poll_info = 0xffffffffu; //_poll_info.curr;
 }
 
@@ -825,6 +890,19 @@ void DG_DrawFrame() {
 
     *_melted_moon_fb_page = (u32)_which_frame;
     //++_ticks;
+
+    //++_ticks_vblank_cnt;
+    //if (_ticks_vblank_cnt == MELTED_MOON_TICRATE * 2ul) {
+    //    _ticks_vblank_cnt = 0;
+    //    _ticks_fxpt &= ~0xfffful;
+    //    _ticks_fxpt += 0x10000ul;
+    //} else {
+    //    //_ticks_fxpt += (u32)((1ul << 16ul) / (MELTED_MOON_TICRATE * 2ul));
+    //}
+    //_ticks_fxpt += (u32)((1ul << 16ul) / (MELTED_MOON_TICRATE * 2ul));
+    //_ticks = _ticks
+    //_ticks_fxpt += 1000u;
+
     _which_frame = !_which_frame;
     if (!_which_frame) {
         DG_ScreenBuffer = (pixel_t*)FB_0_BASE;
@@ -933,6 +1011,20 @@ void DG_DrawFrame() {
 //}
 
 int main(int argc, char** argv) {
+    //int cnt = 0;
+    //for (;;) {
+    //    printf(
+    //        "%i\n",
+    //        cnt
+    //    );
+    //    ++cnt;
+
+    //    #ifdef MELTED_MOON_HAVE_POLL_INFO
+    //    while (!((*_melted_moon_poll_info) & (1u << 31u))) {
+    //    }
+    //    *_melted_moon_poll_info = 1u << 31u;
+    //    #endif
+    //}
     const u32 doom1_wad_size = doom1_wad_end - doom1_wad;
     const u32 DEMO1_lmp_size = DEMO1_lmp_end - DEMO1_lmp;
     const u32 DEMO2_lmp_size = DEMO2_lmp_end - DEMO2_lmp;
@@ -941,6 +1033,9 @@ int main(int argc, char** argv) {
 
     char* my_argv[] = {
         "doom.exe",
+        "-nosound",
+        "-nosfx",
+        "-nomusic",
         "-iwad",
         "doom1.wad",
         //"-timedemo",

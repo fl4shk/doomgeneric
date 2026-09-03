@@ -74,6 +74,7 @@ OUTPUT_ELF=$(OUTPUT_PREFIX).elf
 OUTPUT_BIN=$(OUTPUT_PREFIX).bin
 OUTPUT_DIS=$(OUTPUT_PREFIX)-dis.s
 
+
 CC=riscv32-unknown-elf-gcc #clang  # gcc or g++
 #CFLAGS+=-ggdb3 -Os
 CFLAGS:=$(RV32_CFLAGS)
@@ -101,7 +102,10 @@ OBJS_RV32_ASM := $(SRC_RV32_ASM_DOOM:%.s=$(OBJDIR)/%.o)
 #OBJS += $(addprefix $(OBJDIR)/, $(SRC_DOOM))
 #OBJS_RV32_ASM += $(addprefix $(OBJDIR), $(SRC_RV32_ASM_DOOM))
 
+.PHONY: all
+.PHONY: clean
 all:	 $(OUTPUT_BIN) #$(OUTPUT_DIS)
+	@echo $(OUTPUT_BIN)
 
 clean:
 	rm -rf $(OBJDIR)
@@ -141,3 +145,7 @@ $(OBJS_RV32_ASM) : $(OBJDIR)/%.o : %.s
 print:
 	@echo OBJS: $(OBJS)
 
+
+.PHONY: bin disasm
+bin: $(OUTPUT_BIN)
+dasm: $(OUTPUT_DIS)
