@@ -557,7 +557,11 @@ static inline u32 get_time_usec(void) {
     return (((u32)sec0) * 1000000ull) + usec;
 }
 
+extern boolean timingdemo;
 void DG_SleepMs(u32 ms) {
+    if (timingdemo) {
+        return;
+    }
     ////i32 basetime = sleep_ms_helper(); 
 
     ////i32 temp = 0;
@@ -662,7 +666,7 @@ static u32 _ticks_fxpt = 0;
 u32 DG_GetTicksMs() {
     //_ticks += 3;
     //++_ticks;
-    _ticks_fxpt += 1000;
+    //_ticks_fxpt += 1000;
     //printf(
     //    "DG_GetTicksMs(): returning %u\n",
     //    (unsigned)_ticks
@@ -1033,14 +1037,14 @@ int main(int argc, char** argv) {
 
     char* my_argv[] = {
         "doom.exe",
-        "-nosound",
-        "-nosfx",
-        "-nomusic",
         "-iwad",
         "doom1.wad",
         //"-timedemo",
         //"DEMO1"
         #ifdef MELTED_MOON_DOOM_TIMEDEMO_3
+        "-nosound",
+        "-nosfx",
+        "-nomusic",
         "-timedemo",
         "DEMO3"
         #endif      // MELTED_MOON_DOOM_TIMEDEMO_3
