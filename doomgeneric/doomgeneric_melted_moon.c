@@ -32,8 +32,8 @@ typedef int64_t i64;
 #define FB_0_BASE 0x08000000ul//(1ul << 28ul)//0x0a000000ul//0x4000000ull //0x800000ull //0x1000000ull
 #define FB_1_BASE 0x0a000000ul//((1ul << 28ul) | (1ul << 25ul)) //(FB_0_BASE + (320 * 240))
 #define PAL_BASE 0x0c000000ul
-
 #define FB_PAGE_BASE 0x0c000400ul
+
 #define ADDR_DBG_PRINT ((u32)0xe000000ul)
 #define ADDR_DBG_EXIT ((u32)0xe000004ul)
 #define ADDR_TIMER_USEC_LO ((u32)0xe000000ul)
@@ -507,7 +507,7 @@ void DG_SetWindowTitle(const char* title) {
 #define ARR_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
 
-#define MELTED_MOON_TICRATE (35u)
+//#define MELTED_MOON_TICRATE (35u)
 //static inline i32 sleep_ms_helper(void) {
 //    //return (
 //    //    (u32)(*_melted_moon_timer_usec_lo) * 1000u
@@ -546,16 +546,8 @@ void DG_SetWindowTitle(const char* title) {
 //    return newtics;
 //}
 
-static inline u32 get_time_usec(void) {
-    u32 sec0, sec1, usec;
-    do {
-        sec0 = *_melted_moon_timer_sec_lo;
-        usec = *_melted_moon_timer_usec_lo;
-        sec1 = *_melted_moon_timer_sec_lo;
-    } while (sec0 != sec1);
-
-    return (((u32)sec0) * 1000000ull) + usec;
-}
+extern boolean timingdemo;
+//extern boolean screenvisible;
 
 void DG_SleepMs(u32 ms) {
     ////i32 basetime = sleep_ms_helper(); 
@@ -620,49 +612,21 @@ void DG_SleepMs(u32 ms) {
     ////return newtics;
 
     ////printf("testificate\n");
-
-    //u32 basetime = DG_GetTicksMs();
-    const u32 basetime = (
-        get_time_usec()
-        //(
-        //    (
-        //        ((*_melted_moon_timer_sec_lo) * 1000000u)   // convert seconds to microseconds...
-        //        + (*_melted_moon_timer_usec_lo)             // ...then add `usec`
-        //    ) /// 1000u                                       // then convert to millseconds...
-        //)
-    );
-    const u32 num_wait_ticks = ((u32)ms) * 1000ull; 
-    while ((get_time_usec() - basetime) < num_wait_ticks) {
-        asm volatile("nop");
-    }
-
-    //while ((DG_GetTicksMs() - basetime) < ms) {
-    //    //printf("");
-    //}
-
-    //while (
-    //    //(DG_GetTicksMs() - basetime) < ms
-    //    (
-    //    (
-    //        (
-    //            ((*_melted_moon_timer_sec_lo) * 1000000u)   // convert seconds to microseconds...
-    //            + (*_melted_moon_timer_usec_lo)             // ...then add `usec`
-    //        ) /// 1000u                                       // then convert to millseconds...
-    //    ) - basetime 
-    //    ) < ms * 1000 // convert to microseconds
-    //) {
-    //    //printf("");
+    //if (!timingdemo) {
+        u32 basetime = DG_GetTicksMs();
+        while ((DG_GetTicksMs() - basetime) < ms) {
+            printf("");
+            //asm volatile("nop");
+        }
     //}
 }
 
 
-static u32 _ticks_vblank_cnt = 0;
-static u32 _ticks_fxpt = 0;
+//static u32 _ticks = 0;
 
 u32 DG_GetTicksMs() {
     //_ticks += 3;
     //++_ticks;
-    _ticks_fxpt += 1000;
     //printf(
     //    "DG_GetTicksMs(): returning %u\n",
     //    (unsigned)_ticks
@@ -679,43 +643,43 @@ u32 DG_GetTicksMs() {
     //    return basetime; /// 1000u;                            // then convert to millseconds...
     //}
     return (
+        (
+            (
+                ((*_melted_moon_timer_sec_lo) * 1000000u)   // convert seconds to microseconds...
+                + (*_melted_moon_timer_usec_lo)             // ...then add `usec`
+            ) / 1000u                                       // then convert to millseconds...
+        )
         //(
         //    (
         //        ((*_melted_moon_timer_sec_lo) * 1000000u)   // convert seconds to microseconds...
         //        + (*_melted_moon_timer_usec_lo)             // ...then add `usec`
         //    ) / 1000u                                       // then convert to millseconds...
         //)
-
-        // TODO: see if this works
-        // we need to divide by two in addition to extracting the integer component!
-        //_ticks_fxpt / 1000 //>> 1ul//17ul 
-        //_ticks_fxpt
-
-        //#ifdef MELTED_MOON_HAVE_POLL_INFO
-        //_ticks
-        //#else
-        ((u32)get_time_usec()) / 1000ull
-        //#endif
+        //(*_melted_moon_timer_usec_lo) / 1000ul
     );
 }
 
-static bool _which_frame = true;
+boolean which_frame = true;//false; //true;
+static u32 _frame_cnt = 0;
 
 extern boolean palette_changed;
 extern struct color colors[256];
 
 static inline void _my_set_rgb888_palette(void) {
-    if (palette_changed) {
-        for (size_t i=0; i<ARR_SIZE(colors); ++i) {
-            _melted_moon_pal[i] = (
-                (colors[i].b << 16u)
-                | (colors[i].g << 8u)
-                | (colors[i].r << 0u)
-            );
+    //if (!timingdemo) {
+        if (palette_changed) {
+            for (size_t i=0; i<ARR_SIZE(colors); ++i) {
+                _melted_moon_pal[i] = (
+                    (colors[i].b << 16u)
+                    | (colors[i].g << 8u)
+                    | (colors[i].r << 0u)
+                );
+            }
+            palette_changed = false;
         }
-        palette_changed = false;
-    }
+    //}
 }
+
 
 // "J1,A,B,X,Y,LT,RT,Select,Start;",
 
@@ -731,8 +695,8 @@ static const int _key_map_arr[] = {
     KEY_ENTER,          // menu accept (button: X)
     KEY_FIRE,           // fire gun (button: Y)
     //--------
-    KEY_STRAFE_L,       // strafe left (button: LB)
-    KEY_STRAFE_R,       // strafe right (button: RB)
+    KEY_STRAFE_L,       // strafe left (button: LT)
+    KEY_STRAFE_R,       // strafe right (button: RT)
     //--------
     KEY_TAB,            // bring up map (button: select)
     KEY_ESCAPE,         // pause (button: start)
@@ -792,60 +756,61 @@ static inline void addKeyToQueue(int pressed, unsigned int keyCode) {
 }
 
 int DG_GetKey(int* pressed, unsigned char* doomKey) {
-	if (s_KeyQueueReadIndex == s_KeyQueueWriteIndex) {
-		//key queue is empty
+    if (!timingdemo) {
+        if (s_KeyQueueReadIndex == s_KeyQueueWriteIndex) {
+            //key queue is empty
 
-		return 0;
-	} else {
-		unsigned short keyData = s_KeyQueue[s_KeyQueueReadIndex];
-		s_KeyQueueReadIndex++;
-		s_KeyQueueReadIndex %= KEYQUEUE_SIZE;
+            return 0;
+        } else {
+            unsigned short keyData = s_KeyQueue[s_KeyQueueReadIndex];
+            s_KeyQueueReadIndex++;
+            s_KeyQueueReadIndex %= KEYQUEUE_SIZE;
 
-		*pressed = keyData >> 8;
-		*doomKey = keyData & 0xFF;
+            *pressed = keyData >> 8;
+            *doomKey = keyData & 0xFF;
 
-		return 1;
-	}
+            return 1;
+        }
+    } else {
+        return 0;
+    }
 }
 static inline void _mm_handle_poll_info(void) {
     _poll_info.prev = _poll_info.curr;
     _poll_info.curr = *_melted_moon_poll_info;
 
-    for (u32 key_idx=0u; key_idx<_key_map_arr_size; ++key_idx) {
-        const u32 mask = 1u << key_idx;
-        //if (
-        //) {
-        //}
-        //if (
-        //    //temp_poll_info & mask
-        //    (!(_joystick_0 & mask))
-        //    && (temp_poll_info & mask)
-        //) {
-        //    addKeyToQueue(1, key_idx);
-        //} else if (
-        //    (_joystick_0 & mask)
-        //    && (!(temp_poll_info & mask))
-        //) {
-        //    addKeyToQueue(0, key_idx);
-        //}
-        if (_mm_key_fell(mask)) {
-            addKeyToQueue(1, key_idx);
-        } else if (_mm_key_rose(mask)) {
-            addKeyToQueue(0, key_idx);
+    if (!timingdemo) {
+        for (u32 key_idx=0u; key_idx<_key_map_arr_size; ++key_idx) {
+            const u32 mask = 1u << key_idx;
+            //if (
+            //) {
+            //}
+            //if (
+            //    //temp_poll_info & mask
+            //    (!(_joystick_0 & mask))
+            //    && (temp_poll_info & mask)
+            //) {
+            //    addKeyToQueue(1, key_idx);
+            //} else if (
+            //    (_joystick_0 & mask)
+            //    && (!(temp_poll_info & mask))
+            //) {
+            //    addKeyToQueue(0, key_idx);
+            //}
+            if (_mm_key_fell(mask)) {
+                addKeyToQueue(1, key_idx);
+            } else if (_mm_key_rose(mask)) {
+                addKeyToQueue(0, key_idx);
+            }
         }
     }
 
-    //if (!(_poll_info.curr & (1u << 31u))) {
-    //    // we aren't in VBlank yet! poll until we get there!
-    //    while (
-    //        !((*_melted_moon_poll_info) & (1u << 31u))
-    //    ) {
-    //        __asm__ volatile ("nop");
-    //    }
-    //}
-
-    //_ticks += //MELTED_MOON_TICRATE * 2
-    //_ticks = _ticks_fxpt / 1000000ull;
+    if (!(_poll_info.curr & (1u << 31u))) {
+        // if we're not already in VBlank, poll until we are
+        while (!((*_melted_moon_poll_info) & (1u << 31u))) {
+            asm volatile("nop");
+        }
+    }
 
     *_melted_moon_poll_info = 0xffffffffu; //_poll_info.curr;
 }
@@ -888,26 +853,29 @@ void DG_DrawFrame() {
     _mm_handle_poll_info();
     #endif      // MELTED_MOON_HAVE_POLL_INFO
 
-    *_melted_moon_fb_page = (u32)_which_frame;
-    //++_ticks;
+    //const bool my_frame_sel = (bool)((_frame_cnt >> 1) & 0x1u);
+    ++_frame_cnt;
+    //const bool my_frame_sel = (bool)((_frame_cnt >> 1) & 0x1u);
 
-    //++_ticks_vblank_cnt;
-    //if (_ticks_vblank_cnt == MELTED_MOON_TICRATE * 2ul) {
-    //    _ticks_vblank_cnt = 0;
-    //    _ticks_fxpt &= ~0xfffful;
-    //    _ticks_fxpt += 0x10000ul;
-    //} else {
-    //    //_ticks_fxpt += (u32)((1ul << 16ul) / (MELTED_MOON_TICRATE * 2ul));
-    //}
-    //_ticks_fxpt += (u32)((1ul << 16ul) / (MELTED_MOON_TICRATE * 2ul));
-    //_ticks = _ticks
-    //_ticks_fxpt += 1000u;
+    if (
+        //((bool)((_frame_cnt >> 1) & 0x1u)) != my_frame_sel
+        //!my_frame_sel
+        //(_frame_cnt & 0x1u) == 0x0
+        true
+    ) {
+        // only do a page flip every other frame!
+        // We have a 70 Hz video signal,
+        // but we're going down to page flipping only at DOOM's `TICRATE` of 35 Hz!
 
-    _which_frame = !_which_frame;
-    if (!_which_frame) {
-        DG_ScreenBuffer = (pixel_t*)FB_0_BASE;
-    } else {
-        DG_ScreenBuffer = (pixel_t*)FB_1_BASE;
+        //which_frame = !which_frame;
+        *_melted_moon_fb_page = (u32)which_frame;//(u32)my_frame_sel;
+        //++_ticks;
+        which_frame = !which_frame;
+        if (!which_frame) {
+            I_VideoBuffer = (byte*)FB_0_BASE;
+        } else {
+            I_VideoBuffer = (byte*)FB_1_BASE;
+        }
     }
 }
 
@@ -930,7 +898,7 @@ void DG_DrawFrame() {
 //        colors[3].b = 0xff;
 //    //}
 //    _my_set_rgb888_palette();
-//    _which_frame = false;
+//    which_frame = false;
 //    for (;;) {
 //        #ifdef MELTED_MOON_HAVE_POLL_INFO
 //        if ((*_melted_moon_poll_info) & (1u << 31u)) 
@@ -959,7 +927,7 @@ void DG_DrawFrame() {
 //                i<SCREENWIDTH * SCREENHEIGHT;
 //                i+=4
 //            ) {
-//                if (!_which_frame) {
+//                if (!which_frame) {
 //                    _melted_moon_fb_0_u32[(i >> 2u) + 0] = (
 //                        //(my_screen_buf[i+0] << 0u)
 //                        //| (my_screen_buf[i+1] << 8u)
@@ -989,15 +957,15 @@ void DG_DrawFrame() {
 //                    );
 //                }
 //            }
-//            //if (!_which_frame) {
+//            //if (!which_frame) {
 //            //    // for the emulator
 //            //    _melted_moon_fb_1[(SCREENWIDTH * FULL_SCREENHEIGHT) - 1] = 0u;
 //            //} else {
 //            //    // for the emulator
 //            //    _melted_moon_fb_0[(SCREENWIDTH * FULL_SCREENHEIGHT) - 1] = 0u;
 //            //}
-//            *_melted_moon_fb_page = !_which_frame;
-//            _which_frame = !_which_frame;
+//            *_melted_moon_fb_page = !which_frame;
+//            which_frame = !which_frame;
 //        }
 //    }
 //    //_melted_moon_fb_0[0] = 0x7c1f;
@@ -1011,20 +979,6 @@ void DG_DrawFrame() {
 //}
 
 int main(int argc, char** argv) {
-    //int cnt = 0;
-    //for (;;) {
-    //    printf(
-    //        "%i\n",
-    //        cnt
-    //    );
-    //    ++cnt;
-
-    //    #ifdef MELTED_MOON_HAVE_POLL_INFO
-    //    while (!((*_melted_moon_poll_info) & (1u << 31u))) {
-    //    }
-    //    *_melted_moon_poll_info = 1u << 31u;
-    //    #endif
-    //}
     const u32 doom1_wad_size = doom1_wad_end - doom1_wad;
     const u32 DEMO1_lmp_size = DEMO1_lmp_end - DEMO1_lmp;
     const u32 DEMO2_lmp_size = DEMO2_lmp_end - DEMO2_lmp;
@@ -1033,14 +987,14 @@ int main(int argc, char** argv) {
 
     char* my_argv[] = {
         "doom.exe",
-        "-nosound",
-        "-nosfx",
-        "-nomusic",
         "-iwad",
         "doom1.wad",
         //"-timedemo",
         //"DEMO1"
         #ifdef MELTED_MOON_DOOM_TIMEDEMO_3
+        //"-nosound",
+        //"-nosfx",
+        //"-novoice",
         "-timedemo",
         "DEMO3"
         #endif      // MELTED_MOON_DOOM_TIMEDEMO_3
@@ -1096,7 +1050,11 @@ int main(int argc, char** argv) {
         skinny_fs_fclose((void*)temp_file);
         //--------
     }
-    DG_ScreenBuffer = (pixel_t*)FB_1_BASE;
+    if (!which_frame) {
+        I_VideoBuffer = (byte*)FB_0_BASE;
+    } else {
+        I_VideoBuffer = (byte*)FB_1_BASE;
+    }
     ////my_fb_test_do_it(argc, argv);
     doomgeneric_Create(my_argc, my_argv);
 

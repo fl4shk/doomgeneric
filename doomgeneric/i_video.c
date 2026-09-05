@@ -320,6 +320,7 @@ void I_UpdateNoBlit (void)
 
 void I_FinishUpdate (void)
 {
+    #ifndef MELTED_MOON_RISCV32
     int y;
     int x_offset, y_offset, x_offset_end;
     unsigned char *line_in, *line_out;
@@ -365,8 +366,14 @@ void I_FinishUpdate (void)
         }
         line_in += SCREENWIDTH;
     }
+    #else       // if defined(MELTED_MOON_RISCV32)
+    #endif
 
 	DG_DrawFrame();
+
+	#ifdef MELTED_MOON_RISCV32
+	I_VideoBuffer = DG_ScreenBuffer;
+	#endif
 }
 
 //

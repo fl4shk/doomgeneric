@@ -45,6 +45,7 @@ wipe_shittyColMajorXform
   int		width,
   int		height )
 {
+    #ifndef MELTED_MOON_RISCV32k
     int		x;
     int		y;
     short*	dest;
@@ -58,7 +59,7 @@ wipe_shittyColMajorXform
     memcpy(array, dest, width*height*2);
 
     Z_Free(dest);
-
+    #endif
 }
 
 int
@@ -67,7 +68,9 @@ wipe_initColorXForm
   int	height,
   int	ticks )
 {
+    #ifndef MELTED_MOON_RISCV32
     memcpy(wipe_scr, wipe_scr_start, width*height);
+    #endif
     return 0;
 }
 
@@ -77,6 +80,7 @@ wipe_doColorXForm
   int	height,
   int	ticks )
 {
+    #ifndef MELTED_MOON_RISCV32
     boolean	changed;
     byte*	w;
     byte*	e;
@@ -114,6 +118,9 @@ wipe_doColorXForm
     }
 
     return !changed;
+    #else // if defined(MELTED_MOON_RISCV32)
+    return 0;
+    #endif
 
 }
 
@@ -135,6 +142,7 @@ wipe_initMelt
   int	height,
   int	ticks )
 {
+    #ifndef MELTED_MOON_RISCV32
     int i, r;
     
     // copy start screen to main screen
@@ -156,6 +164,7 @@ wipe_initMelt
 	if (y[i] > 0) y[i] = 0;
 	else if (y[i] == -16) y[i] = -15;
     }
+    #endif      // MELTED_MOON_RISCV32
 
     return 0;
 }
@@ -166,6 +175,7 @@ wipe_doMelt
   int	height,
   int	ticks )
 {
+    #ifndef MELTED_MOON_RISCV32
     int		i;
     int		j;
     int		dy;
@@ -212,7 +222,9 @@ wipe_doMelt
     }
 
     return done;
-
+    #else // if defined(MELTED_MOON_RISCV32)
+    return 1;
+    #endif
 }
 
 int
@@ -221,9 +233,11 @@ wipe_exitMelt
   int	height,
   int	ticks )
 {
+    #ifndef MELTED_MOON_RISCV32
     Z_Free(y);
     Z_Free(wipe_scr_start);
     Z_Free(wipe_scr_end);
+    #endif
     return 0;
 }
 
@@ -234,8 +248,10 @@ wipe_StartScreen
   int	width,
   int	height )
 {
+    #ifndef MELTED_MOON_RISCV32
     wipe_scr_start = Z_Malloc(SCREENWIDTH * SCREENHEIGHT, PU_STATIC, NULL);
     I_ReadScreen(wipe_scr_start);
+    #endif
     return 0;
 }
 
@@ -246,9 +262,11 @@ wipe_EndScreen
   int	width,
   int	height )
 {
+    #ifndef MELTED_MOON_RISCV32
     wipe_scr_end = Z_Malloc(SCREENWIDTH * SCREENHEIGHT, PU_STATIC, NULL);
     I_ReadScreen(wipe_scr_end);
     V_DrawBlock(x, y, width, height, wipe_scr_start); // restore start scr.
+    #endif
     return 0;
 }
 
@@ -261,6 +279,7 @@ wipe_ScreenWipe
   int	height,
   int	ticks )
 {
+    #ifndef MELTED_MOON_RISCV32
     int rc;
     static int (*wipes[])(int, int, int) =
     {
@@ -290,5 +309,8 @@ wipe_ScreenWipe
     }
 
     return !go;
+    #else
+    return 1; // final stuff value
+    #endif
 }
 
