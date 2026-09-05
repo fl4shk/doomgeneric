@@ -415,7 +415,6 @@ void ST_Stop(void);
 
 void ST_refreshBackground(void)
 {
-
     if (st_statusbaron)
     {
         V_UseBuffer(st_backing_screen);

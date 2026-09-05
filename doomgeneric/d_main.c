@@ -219,7 +219,11 @@ void D_Display (void)
 			redrawsbar = true;
 		if (inhelpscreensstate && !inhelpscreens)
 			redrawsbar = true;              // just put away the help screen
+		#ifndef MELTED_MOON_RISCV32
 		ST_Drawer (viewheight == 200, redrawsbar );
+		#else // if defined(MELTED_MOON_RISCV32)
+                ST_Drawer (viewheight == 200, true );
+		#endif
 		fullscreen = viewheight == 200;
 		break;
 
@@ -485,6 +489,7 @@ void D_PageTicker (void)
 //
 void D_PageDrawer (void)
 {
+    //V_RestoreBuffer();
     V_DrawPatch (0, 0, W_CacheLumpName(pagename, PU_CACHE));
 }
 

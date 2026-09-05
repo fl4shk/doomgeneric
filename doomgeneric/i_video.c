@@ -50,6 +50,14 @@ rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
 //#define CMAP256
 
+#ifdef MELTED_MOON_RISCV32
+#define FB_0_BASE 0x08000000ul//(1ul << 28ul)//0x0a000000ul//0x4000000ull //0x800000ull //0x1000000ull
+#define FB_1_BASE 0x0a000000ul//((1ul << 28ul) | (1ul << 25ul)) //(FB_0_BASE + (320 * 240))
+#define PAL_BASE 0x0c000000ul
+#define FB_PAGE_BASE 0x0c000400ul
+#endif
+
+
 struct FB_BitField
 {
 	uint32_t offset;			/* beginning of bitfield	*/
@@ -287,7 +295,11 @@ void I_InitGraphics (void)
 
 
     /* Allocate screen to draw to */
+    #ifndef MELTED_MOON_RISCV32
 	I_VideoBuffer = (byte*)Z_Malloc (SCREENWIDTH * SCREENHEIGHT, PU_STATIC, NULL);  // For DOOM to draw on
+	#else
+	I_VideoBuffer = (byte*)FB_1_BASE;
+	#endif
 
 	screenvisible = true;
 
@@ -297,7 +309,9 @@ void I_InitGraphics (void)
 
 void I_ShutdownGraphics (void)
 {
+    #ifndef MELTED_MOON_RISCV32
 	Z_Free (I_VideoBuffer);
+	#endif
 }
 
 void I_StartFrame (void)
@@ -369,11 +383,15 @@ void I_FinishUpdate (void)
     #else       // if defined(MELTED_MOON_RISCV32)
     #endif
 
+	//#ifdef MELTED_MOON_RISCV32
+	//I_VideoBuffer = DG_ScreenBuffer;
+	//#endif
+
 	DG_DrawFrame();
 
-	#ifdef MELTED_MOON_RISCV32
-	I_VideoBuffer = DG_ScreenBuffer;
-	#endif
+	//#ifdef MELTED_MOON_RISCV32
+	//I_VideoBuffer = DG_ScreenBuffer;
+	//#endif
 }
 
 //

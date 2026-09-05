@@ -860,8 +860,8 @@ void DG_DrawFrame() {
     if (
         //((bool)((_frame_cnt >> 1) & 0x1u)) != my_frame_sel
         //!my_frame_sel
-        //(_frame_cnt & 0x1u) == 0x0
-        true
+        (_frame_cnt & 0x1u) == 0x0
+        //true
     ) {
         // only do a page flip every other frame!
         // We have a 70 Hz video signal,
