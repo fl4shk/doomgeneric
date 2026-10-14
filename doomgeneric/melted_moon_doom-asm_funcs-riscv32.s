@@ -3,6 +3,10 @@
 .global _my_text_start
 _my_text_start:
     j _start
+    nop
+    nop
+    nop
+    nop
 
 .align 4
 .global my_doom_exit

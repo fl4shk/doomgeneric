@@ -24,9 +24,33 @@ typedef uint32_t pixel_t;
 #endif  // CMAP256
 
 
-#ifdef MELTED_MOON_RISCV32
-#define FB_0_BASE 0x08000000ul//(1ul << 28ul)//0x0a000000ul//0x4000000ull //0x800000ull //0x1000000ull
-#endif
+//#define FB_0_BASE 0x08000000ul//(1ul << 28ul)//0x0a000000ul//0x4000000ull //0x800000ull //0x1000000ull
+//#define FB_1_BASE 0x0a000000ul//((1ul << 28ul) | (1ul << 25ul)) //(FB_0_BASE + (320 * 240))
+//#define PAL_BASE 0x0c000000ul
+//
+//#define FB_PAGE_BASE 0x0c000400ul
+
+//#define FB_0_BASE 0x08000000ul//(1ul << 28ul)//0x0a000000ul//0x4000000ull //0x800000ull //0x1000000ull
+//#define FB_1_BASE 0x0a000000ul//((1ul << 28ul) | (1ul << 25ul)) //(FB_0_BASE + (320 * 240))
+//#define PAL_BASE 0x0c000000ul
+//
+//#define FB_PAGE_BASE 0x0c000400ul
+
+#define FB_0_BASE 0x10000000ul//(1ul << 28ul)//0x0a000000ul//0x4000000ull //0x800000ull //0x1000000ull
+#define FB_1_BASE 0x12000000ul//((1ul << 28ul) | (1ul << 25ul)) //(FB_0_BASE + (320 * 240))
+#define PAL_BASE 0x14000000ul
+#define FB_PAGE_BASE 0x14000400ul
+//#define TCM_BASE 0x18000000ul
+
+
+#define ADDR_DBG_PRINT (0x16000000ul)
+#define ADDR_DBG_EXIT (0x16000004ul)
+#define ADDR_TIMER_USEC_LO (0x16000000ul)
+//#define ADDR_TIMER_USEC_HI (0x16000004ul)
+#define ADDR_TIMER_SEC_LO (0x16000008ul)
+//#define ADDR_TIMER_SEC_HI (0x1600000cul)
+#define ADDR_POLL_INFO (0x1600000cul)
+
 
 extern pixel_t* DG_ScreenBuffer;
 

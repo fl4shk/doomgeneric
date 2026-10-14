@@ -23,6 +23,10 @@ MEMORY
   /* ram (w!rx) : ORIGIN = 0x0000, LENGTH = 0x4000000 */
   /* ram (w!rx) : ORIGIN = 0x0000, LENGTH = 0x4000000 */ /* 64 MiB */
   ram (w!rx) : ORIGIN = 0x0000, LENGTH = 0x2000000 /* 32 MiB */
+  /* tcm (w!r) : ORIGIN = 0x18000000, LENGTH = 0x40000 */ /* 128 kiB */
+  /* tcm (w!r) : ORIGIN = 0x18000000, LENGTH = 0x40000 */ /* 256 kiB */
+  /* tcm_fb (w!r) : ORIGIN = 0x18000000, LENGTH = 0xfa00 */
+  /* tcm_bss (w!r) : ORIGIN = 0x1800fa00, LENGTH = 0x10600 */
   /* framebuffer (w!rx) : ORIGIN = 0x2000000 */
   /* far_ram_0 (w!rx) : ORIGIN = 0x1000000, LENGTH = 0x1000 */
   /* far_ram_1 (w!rx) : ORIGIN = 0x2000000, LENGTH = 0x1000 */
@@ -77,7 +81,7 @@ SECTIONS
     *(COMMON)
      __bss_end = . ;
     /*  __bss_size = __bss_end - __bss_start ;   */
-  }  > ram
+  }  > ram /* tcm */ /* ram */
    PROVIDE(__bss_size = __bss_end - __bss_start) ;
   /*  PROVIDE (stack = 0x03fffffc) */
   .stack  0x0fffffc /*0x30000*/   :

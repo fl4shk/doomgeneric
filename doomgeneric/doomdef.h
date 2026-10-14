@@ -39,7 +39,9 @@
 
 // If rangecheck is undefined,
 // most parameter validation debugging code will not be compiled
+#ifndef MELTED_MOON_RISCV32
 #define RANGECHECK
+#endif
 
 // The maximum number of players, multiplayer/networking.
 #define MAXPLAYERS 4

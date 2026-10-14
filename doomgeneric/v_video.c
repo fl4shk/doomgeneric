@@ -43,7 +43,9 @@
 
 // TODO: There are separate RANGECHECK defines for different games, but this
 // is common code. Fix this.
+#ifndef MELTED_MOON_RISCV32
 #define RANGECHECK
+#endif
 
 // Blending table used for fuzzpatch, etc.
 // Only used in Heretic/Hexen
@@ -71,11 +73,13 @@ void V_MarkRect(int x, int y, int width, int height)
     // If we are temporarily using an alternate screen, do not 
     // affect the update box.
 
+    #ifndef MELTED_MOON_RISCV32
     if (dest_screen == I_VideoBuffer)
     {
         M_AddToBox (dirtybox, x, y); 
         M_AddToBox (dirtybox, x + width-1, y + height-1); 
     }
+    #endif
 } 
  
 

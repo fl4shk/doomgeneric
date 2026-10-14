@@ -287,7 +287,11 @@ void I_InitGraphics (void)
 
 
     /* Allocate screen to draw to */
+    //#ifdef MELTED_MOON_RISCV32
+    //I_VideoBuffer = (byte*)TCM_BASE;
+    //#else
 	I_VideoBuffer = (byte*)Z_Malloc (SCREENWIDTH * SCREENHEIGHT, PU_STATIC, NULL);  // For DOOM to draw on
+	//#endif
 
 	screenvisible = true;
 
@@ -297,7 +301,9 @@ void I_InitGraphics (void)
 
 void I_ShutdownGraphics (void)
 {
+    //#ifndef MELTED_MOON_RISCV32
 	Z_Free (I_VideoBuffer);
+	//#endif
 }
 
 void I_StartFrame (void)
@@ -320,6 +326,7 @@ void I_UpdateNoBlit (void)
 
 void I_FinishUpdate (void)
 {
+#ifndef MELTED_MOON_RISCV32
     int y;
     int x_offset, y_offset, x_offset_end;
     unsigned char *line_in, *line_out;
@@ -365,6 +372,7 @@ void I_FinishUpdate (void)
         }
         line_in += SCREENWIDTH;
     }
+#endif
 
 	DG_DrawFrame();
 }

@@ -29,133 +29,7 @@ typedef int64_t i64;
 
 #define ARR_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
-#define FB_0_BASE 0x08000000ul//(1ul << 28ul)//0x0a000000ul//0x4000000ull //0x800000ull //0x1000000ull
-#define FB_1_BASE 0x0a000000ul//((1ul << 28ul) | (1ul << 25ul)) //(FB_0_BASE + (320 * 240))
-#define PAL_BASE 0x0c000000ul
-
-#define FB_PAGE_BASE 0x0c000400ul
-#define ADDR_DBG_PRINT ((u32)0xe000000ul)
-#define ADDR_DBG_EXIT ((u32)0xe000004ul)
-#define ADDR_TIMER_USEC_LO ((u32)0xe000000ul)
-//#define ADDR_TIMER_USEC_HI ((u32)0xe000004ul)
-#define ADDR_TIMER_SEC_LO ((u32)0xe000008ul)
-//#define ADDR_TIMER_SEC_HI ((u32)0xe00000cul)
-#define ADDR_POLL_INFO ((u32)0xe00000cul)
-
 #define FULL_SCREENHEIGHT (240u)
-
-
-#ifdef MELTED_MOON_RISCV32
-#define ADDR_UDIV64_INP_LEFT_LO ((u32)0xe000010ul)
-#define ADDR_UDIV64_INP_LEFT_HI ((u32)0xe000014ul)
-#define ADDR_UDIV64_INP_RIGHT_LO ((u32)0xe000018ul)
-#define ADDR_UDIV64_INP_RIGHT_HI ((u32)0xe00001cul)
-#define ADDR_UDIV64_OUTP_QUOT_LO ((u32)0xe000010ul)
-#define ADDR_UDIV64_OUTP_QUOT_HI ((u32)0xe000014ul)
-#define ADDR_UDIV64_OUTP_REMA_LO ((u32)0xe000018ul)
-#define ADDR_UDIV64_OUTP_REMA_HI ((u32)0xe00001cul)
-
-#define ADDR_IDIV64_INP_LEFT_LO ((u32)0xe000020ul)
-#define ADDR_IDIV64_INP_LEFT_HI ((u32)0xe000024ul)
-#define ADDR_IDIV64_INP_RIGHT_LO ((u32)0xe000028ul)
-#define ADDR_IDIV64_INP_RIGHT_HI ((u32)0xe00002cul)
-#define ADDR_IDIV64_OUTP_QUOT_LO ((u32)0xe000020ul)
-#define ADDR_IDIV64_OUTP_QUOT_HI ((u32)0xe000024ul)
-#define ADDR_IDIV64_OUTP_REMA_LO ((u32)0xe000028ul)
-#define ADDR_IDIV64_OUTP_REMA_HI ((u32)0xe00002cul)
-
-static volatile u32* mm_udiv64_inp_left_lo = (
-    (volatile u32*)(ADDR_UDIV64_INP_LEFT_LO)
-);
-static volatile u32* mm_udiv64_inp_left_hi = (
-    (volatile u32*)(ADDR_UDIV64_INP_LEFT_HI)
-);
-static volatile u32* mm_udiv64_inp_right_lo = (
-    (volatile u32*)(ADDR_UDIV64_INP_RIGHT_LO)
-);
-static volatile u32* mm_udiv64_inp_right_hi = (
-    (volatile u32*)(ADDR_UDIV64_INP_RIGHT_HI)
-);
-static volatile u32* mm_udiv64_outp_quot_lo = (
-    (volatile u32*)(ADDR_UDIV64_OUTP_QUOT_LO)
-);
-static volatile u32* mm_udiv64_outp_quot_hi = (
-    (volatile u32*)(ADDR_UDIV64_OUTP_QUOT_HI)
-);
-static volatile u32* mm_udiv64_outp_rema_lo = (
-    (volatile u32*)(ADDR_UDIV64_OUTP_REMA_LO)
-);
-static volatile u32* mm_udiv64_outp_rema_hi = (
-    (volatile u32*)(ADDR_UDIV64_OUTP_REMA_HI)
-);
-
-static volatile u32* mm_idiv64_inp_left_lo = (
-    (volatile u32*)(ADDR_IDIV64_INP_LEFT_LO)
-);
-static volatile u32* mm_idiv64_inp_left_hi = (
-    (volatile u32*)(ADDR_IDIV64_INP_LEFT_HI)
-);
-static volatile u32* mm_idiv64_inp_right_lo = (
-    (volatile u32*)(ADDR_IDIV64_INP_RIGHT_LO)
-);
-static volatile u32* mm_idiv64_inp_right_hi = (
-    (volatile u32*)(ADDR_IDIV64_INP_RIGHT_HI)
-);
-static volatile u32* mm_idiv64_outp_quot_lo = (
-    (volatile u32*)(ADDR_IDIV64_OUTP_QUOT_LO)
-);
-static volatile u32* mm_idiv64_outp_quot_hi = (
-    (volatile u32*)(ADDR_IDIV64_OUTP_QUOT_HI)
-);
-static volatile u32* mm_idiv64_outp_rema_lo = (
-    (volatile u32*)(ADDR_IDIV64_OUTP_REMA_LO)
-);
-static volatile u32* mm_idiv64_outp_rema_hi = (
-    (volatile u32*)(ADDR_IDIV64_OUTP_REMA_HI)
-);
-
-u64 __udivdi3(u64 left, u64 right) {
-    *mm_udiv64_inp_left_lo = (u32)left;
-    *mm_udiv64_inp_left_hi = (u32)(left >> 32u);
-    *mm_udiv64_inp_right_lo = (u32)right;
-    *mm_udiv64_inp_right_hi = (u32)(right >> 32u);
-    return (u64)(
-        ((u64)(*mm_udiv64_outp_quot_lo))
-        | ((u64)(*mm_udiv64_outp_quot_hi) << 32u)
-    );
-}
-u64 __umoddi3(u64 left, u64 right) {
-    *mm_udiv64_inp_left_lo = (u32)left;
-    *mm_udiv64_inp_left_hi = (u32)(left >> 32u);
-    *mm_udiv64_inp_right_lo = (u32)right;
-    *mm_udiv64_inp_right_hi = (u32)(right >> 32u);
-    return (u64)(
-        ((u64)(*mm_udiv64_outp_rema_lo))
-        | ((u64)(*mm_udiv64_outp_rema_hi) << 32u)
-    );
-}
-
-i64 __divdi3(i64 left, i64 right) {
-    *mm_idiv64_inp_left_lo = (u32)left;
-    *mm_idiv64_inp_left_hi = (u32)(left >> 32u);
-    *mm_idiv64_inp_right_lo = (u32)right;
-    *mm_idiv64_inp_right_hi = (u32)(right >> 32u);
-    return (u64)(
-        ((u64)(*mm_idiv64_outp_quot_lo))
-        | ((u64)(*mm_idiv64_outp_quot_hi) << 32u)
-    );
-}
-i64 __moddi3(i64 left, i64 right) {
-    *mm_idiv64_inp_left_lo = (u32)left;
-    *mm_idiv64_inp_left_hi = (u32)(left >> 32u);
-    *mm_idiv64_inp_right_lo = (u32)right;
-    *mm_idiv64_inp_right_hi = (u32)(right >> 32u);
-    return (u64)(
-        ((u64)(*mm_idiv64_outp_rema_lo))
-        | ((u64)(*mm_idiv64_outp_rema_hi) << 32u)
-    );
-}
-#endif
 
 static volatile u8* _melted_moon_dbg_print = (
     (volatile u8*)(
@@ -484,7 +358,11 @@ void _exit(int status) {
     }
 }
 
+#ifdef MELTED_MOON_DOOM_TIMEDEMO_3
+#error "Eek! Make sure to switch back to `doom1.wad`!"
+#endif
 
+#if 0
 extern u8 doom1_wad[];
 extern u8 doom1_wad_end[];
 extern u8 DEMO1_lmp[];
@@ -493,6 +371,11 @@ extern u8 DEMO2_lmp[];
 extern u8 DEMO2_lmp_end[];
 extern u8 DEMO3_lmp[];
 extern u8 DEMO3_lmp_end[];
+#else
+
+extern u8 newdoom1_1lev_wad[];
+extern u8 newdoom1_1lev_wad_end[];
+#endif
 
 void DG_Init() {
     //DG_ScreenBuffer = (pixel_t*)FB_0_BASE;
@@ -703,7 +586,9 @@ u32 DG_GetTicksMs() {
     );
 }
 
-static bool _which_frame = true;
+//static bool _which_frame = true;
+//u32 which_frame_cnt = 2u;
+extern byte *I_VideoBuffer;
 
 extern boolean palette_changed;
 extern struct color colors[256];
@@ -811,110 +696,176 @@ int DG_GetKey(int* pressed, unsigned char* doomKey) {
 		return 1;
 	}
 }
+
+//static u32 _mm_start_draw = 0u;
+static u32 _mm_page_flip = 0u;
+
 static inline void _mm_handle_poll_info(void) {
     _poll_info.prev = _poll_info.curr;
     _poll_info.curr = *_melted_moon_poll_info;
 
-    for (u32 key_idx=0u; key_idx<_key_map_arr_size; ++key_idx) {
-        const u32 mask = 1u << key_idx;
-        //if (
-        //) {
-        //}
-        //if (
-        //    //temp_poll_info & mask
-        //    (!(_joystick_0 & mask))
-        //    && (temp_poll_info & mask)
-        //) {
-        //    addKeyToQueue(1, key_idx);
-        //} else if (
-        //    (_joystick_0 & mask)
-        //    && (!(temp_poll_info & mask))
-        //) {
-        //    addKeyToQueue(0, key_idx);
-        //}
-        if (_mm_key_fell(mask)) {
-            addKeyToQueue(1, key_idx);
-        } else if (_mm_key_rose(mask)) {
-            addKeyToQueue(0, key_idx);
+    if (!timingdemo) {
+        for (u32 key_idx=0u; key_idx<_key_map_arr_size; ++key_idx) {
+            const u32 mask = 1u << key_idx;
+            //if (
+            //) {
+            //}
+            //if (
+            //    //temp_poll_info & mask
+            //    (!(_joystick_0 & mask))
+            //    && (temp_poll_info & mask)
+            //) {
+            //    addKeyToQueue(1, key_idx);
+            //} else if (
+            //    (_joystick_0 & mask)
+            //    && (!(temp_poll_info & mask))
+            //) {
+            //    addKeyToQueue(0, key_idx);
+            //}
+            if (_mm_key_fell(mask)) {
+                addKeyToQueue(1, key_idx);
+            } else if (_mm_key_rose(mask)) {
+                addKeyToQueue(0, key_idx);
+            }
         }
     }
 
-    //if (!(_poll_info.curr & (1u << 31u))) {
-    //    // we aren't in VBlank yet! poll until we get there!
-    //    while (
-    //        !((*_melted_moon_poll_info) & (1u << 31u))
-    //    ) {
-    //        __asm__ volatile ("nop");
-    //    }
+
+    if ((_poll_info.curr & (1u << 31u))) {
+        //_mm_start_draw = true;
+        //++_mm_start_draw;
+        ++_mm_page_flip;
+    }
+
+
+    //if ((_poll_info.curr & (1u << 31u))) {
+    //    //// we aren't in VBlank yet! poll until we get there!
+    //    // we were already in VBlank!
+    //    *_melted_moon_poll_info = (
+    //        0xffffffffu //_poll_info.curr;
+    //        //0x7fffffffu
+    //    );
+    //}
+
+    //while (
+    //    !((*_melted_moon_poll_info) & (1u << 31u))
+    //) {
+    //    __asm__ volatile ("nop");
+    //}
+
+
+    //*_melted_moon_poll_info = (
+    //    0xffffffffu //_poll_info.curr;
+    //    //0x7fffffffu
+    //);
+
+    //while (
+    //    !((*_melted_moon_poll_info) & (1u << 31u))
+    //) {
+    //    __asm__ volatile ("nop");
     //}
 
     //_ticks += //MELTED_MOON_TICRATE * 2
     //_ticks = _ticks_fxpt / 1000000ull;
 
-    *_melted_moon_poll_info = 0xffffffffu; //_poll_info.curr;
+    *_melted_moon_poll_info = (
+        0xffffffffu //_poll_info.curr;
+        //0x7fffffffu
+    );
 }
 
+//void _try_accept_vblank(void) {
+//    if (
+//        ((*_melted_moon_poll_info) & (1u << 31u))
+//    ) {
+//        ++_mm_start_draw;
+//        *_melted_moon_poll_info = (1u << 31u);
+//    }
+//}
+//static inline void _maybe_do_draw(void) {
+//}
+
 void DG_DrawFrame() {
-    _my_set_rgb888_palette();
-
-    //#ifdef MELTED_MOON_HAVE_POLL_INFO
-    //if ((_poll_info.curr & ((1u << _key_map_arr_size) - 1u)) != 0x0u) {
-    //for (u32 key_idx=0u; key_idx<_key_map_arr_size; ++key_idx) {
-    //    const u32 mask = 1u << key_idx;
-    //    //if (
-    //    //    //temp_poll_info & mask
-    //    //    (!(_joystick_0 & mask))
-    //    //    && (temp_poll_info & mask)
-    //    //) {
-    //    //    addKeyToQueue(1, key_idx);
-    //    //} else if (
-    //    //    (_joystick_0 & mask)
-    //    //    && (!(temp_poll_info & mask))
-    //    //) {
-    //    //    addKeyToQueue(0, key_idx);
-    //    //}
-    //}
-    //}
-    //_joystick_0 = temp_poll_info & ((1u << _key_map_arr_size) - 1u);
-
-    //*_melted_moon_poll_info = temp_poll_info;
-    //if (temp_poll_info & (1u << 31u)) { // are we already in VBlank?
-    //} else {
-    //    while (!((_poll_info.curr = *_melted_moon_poll_info) & (1u << 31u))) { // wait for VBlank
-    //        printf("");
-    //    }
-    //    *_melted_moon_poll_info = 1u << 31u;
-    //}
-    //#endif      // MELTED_MOON_HAVE_POLL_INFO
-    //u32 temp_poll_info = _poll_info.curr;
-
     #ifdef MELTED_MOON_HAVE_POLL_INFO
     _mm_handle_poll_info();
+    //_try_accept_vblank();
+    #else
+    //++_mm_start_draw;
+    ++_mm_page_flip;
     #endif      // MELTED_MOON_HAVE_POLL_INFO
 
-    *_melted_moon_fb_page = (u32)_which_frame;
-    //++_ticks;
+    //++_mm_start_draw;
 
-    //++_ticks_vblank_cnt;
-    //if (_ticks_vblank_cnt == MELTED_MOON_TICRATE * 2ul) {
-    //    _ticks_vblank_cnt = 0;
-    //    _ticks_fxpt &= ~0xfffful;
-    //    _ticks_fxpt += 0x10000ul;
-    //} else {
-    //    //_ticks_fxpt += (u32)((1ul << 16ul) / (MELTED_MOON_TICRATE * 2ul));
-    //}
-    //_ticks_fxpt += (u32)((1ul << 16ul) / (MELTED_MOON_TICRATE * 2ul));
-    //_ticks = _ticks
-    //_ticks_fxpt += 1000u;
+    _my_set_rgb888_palette();
 
-    _which_frame = !_which_frame;
-    if (!_which_frame) {
-        DG_ScreenBuffer = (pixel_t*)FB_0_BASE;
-    } else {
-        DG_ScreenBuffer = (pixel_t*)FB_1_BASE;
+    if (
+        ////!(--which_frame_cnt)
+        ////true
+        //#ifdef MELTED_MOON_HAVE_POLL_INFO
+        //_mm_start_draw >= 1u//2u
+        //#else
+        ////_mm_start_draw >= 2u
+        //_mm_start_draw >= 1u
+        //#endif
+
+        //#ifdef MELTED_MOON_HAVE_POLL_INFO
+        ////(_poll_info.curr & (1u << 31u))
+        //_mm_start_draw >= 2u
+        //#else
+        //true
+        //#endif
+        true
+    )
+    {
+        //#ifdef MELTED_MOON_HAVE_POLL_INFO
+        //_mm_start_draw = 0u;
+        ////*_melted_moon_poll_info = 0x80000000u;
+        //#endif
+
+        ////extern void AM_initVariables(void);
+        ////extern void R_InitBuffer(int width, int height);
+
+        //extern void AM_ForceRefresh(void);
+        //extern void R_ForceRefresh(void);
+        //memcpy(
+        //    DG_ScreenBuffer,
+        //    I_VideoBuffer,
+        //    SCREENWIDTH * SCREENHEIGHT
+        //);
+        ////which_frame_cnt = 2;
+        ////I_VideoBuffer = (byte*)DG_ScreenBuffer;
+
+        memcpy(
+            DG_ScreenBuffer,
+            I_VideoBuffer,
+            SCREENWIDTH * SCREENHEIGHT
+        );
+        //--------
+        //if (DG_ScreenBuffer == (pixel_t*)FB_0_BASE)
+        //{
+        //    *_melted_moon_fb_page = (u32)0u;
+        //    DG_ScreenBuffer = (pixel_t*)FB_1_BASE;
+        //}
+        //else
+        //{
+        //    *_melted_moon_fb_page = (u32)1u;
+        //    DG_ScreenBuffer = (pixel_t*)FB_0_BASE;
+        //}
+        //--------
+        //I_VideoBuffer = (byte*)DG_ScreenBuffer;
+
+        ////R_InitBuffer(SCREENWIDTH, SCREENHEIGHT);
+        //AM_ForceRefresh();
+        //R_ForceRefresh();
+
+
+        //////AM_initVariables();
+        ////R_InitBuffer(SCREENWIDTH, SCREENHEIGHT);
+        ////AM_ForceRefresh();
     }
 }
 
+//static bool _which_frame = false;
 //static inline void my_fb_test_do_it(int argc, char** argv) {
 //    //for (size_t i=0; i<6; i+=6) {
 //        colors[0].r = 0xff;
@@ -1029,32 +980,41 @@ int main(int argc, char** argv) {
     //    *_melted_moon_poll_info = 1u << 31u;
     //    #endif
     //}
+    #if 0
     const u32 doom1_wad_size = doom1_wad_end - doom1_wad;
     const u32 DEMO1_lmp_size = DEMO1_lmp_end - DEMO1_lmp;
     const u32 DEMO2_lmp_size = DEMO2_lmp_end - DEMO2_lmp;
     const u32 DEMO3_lmp_size = DEMO3_lmp_end - DEMO3_lmp;
+    #else
+    const u32 newdoom1_1lev_wad_size = newdoom1_1lev_wad_end - newdoom1_1lev_wad;
+    #endif
     //*_melted_moon_dbg_print = '1';
 
     char* my_argv[] = {
         "doom.exe",
         "-iwad",
-        "doom1.wad",
-        //"-timedemo",
-        //"DEMO1"
-        #ifdef MELTED_MOON_DOOM_TIMEDEMO_3
-        "-nosound",
-        "-nosfx",
-        "-nomusic",
-        "-timedemo",
-        "DEMO3"
-        #endif      // MELTED_MOON_DOOM_TIMEDEMO_3
+        #if 0
+            "doom1.wad",
+            //"-timedemo",
+            //"DEMO1"
+            #ifdef MELTED_MOON_DOOM_TIMEDEMO_3
+            "-nosound",
+            "-nosfx",
+            "-nomusic",
+            "-timedemo",
+            "DEMO3"
+            #endif      // MELTED_MOON_DOOM_TIMEDEMO_3
+        #else
+            "newdoom1_1lev.wad"
+        #endif
     };
-    int my_argc = sizeof(my_argv) / sizeof(my_argv[0]);
 
+    int my_argc = sizeof(my_argv) / sizeof(my_argv[0]);
     {
         //--------
         skinny_fs_handle_t* temp_file = NULL;
         //--------
+        #if 0
         temp_file = (skinny_fs_handle_t*)skinny_fs_file_init(
             "doom1.wad",
             doom1_wad,
@@ -1098,14 +1058,80 @@ int main(int argc, char** argv) {
             (u32)temp_file, (u32)temp_file->f
         );
         skinny_fs_fclose((void*)temp_file);
+        #else
+        temp_file = (skinny_fs_handle_t*)skinny_fs_file_init(
+            "newdoom1_1lev.wad",
+            newdoom1_1lev_wad,
+            newdoom1_1lev_wad_size
+        );
+        printf(
+            "newdoom1_1lev.wad: handle:%x file:%x\n",
+            (u32)temp_file, (u32)temp_file->f
+        );
+        skinny_fs_fclose((void*)temp_file);
+        #endif
         //--------
     }
+    //*_melted_moon_fb_page = (u32)0;
     DG_ScreenBuffer = (pixel_t*)FB_1_BASE;
     ////my_fb_test_do_it(argc, argv);
     doomgeneric_Create(my_argc, my_argv);
 
     for (;;) {
+        //#ifdef MELTED_MOON_HAVE_POLL_INFO
+        //if (
+        //    ((*_melted_moon_poll_info) & (1u << 31u))
+        //) {
+        //    ++_mm_start_draw;
+        //    *_melted_moon_poll_info = (1u << 31u);
+        //}
+        //#endif
+
         doomgeneric_Tick();
+        if (_mm_page_flip >= 1u) {
+            _mm_page_flip = 0u;
+            if (DG_ScreenBuffer == (pixel_t*)FB_0_BASE)
+            {
+                *_melted_moon_fb_page = (u32)0u;
+                DG_ScreenBuffer = (pixel_t*)FB_1_BASE;
+            }
+            else
+            {
+                *_melted_moon_fb_page = (u32)1u;
+                DG_ScreenBuffer = (pixel_t*)FB_0_BASE;
+            }
+        }
+
+        //I_VideoBuffer = (byte*)DG_ScreenBuffer;
+
+        //if (
+        //    //!(which_frame_cnt--)
+        //    true
+        //)
+        //{
+        //    //which_frame_cnt = 1;
+        //    if (DG_ScreenBuffer == (pixel_t*)FB_0_BASE)
+        //    {
+        //        *_melted_moon_fb_page = (u32)0u;
+        //        DG_ScreenBuffer = (pixel_t*)FB_1_BASE;
+        //    }
+        //    else
+        //    {
+        //        *_melted_moon_fb_page = (u32)1u;
+        //        DG_ScreenBuffer = (pixel_t*)FB_0_BASE;
+        //    }
+        //}
+
+        //if (I_VideoBuffer != (byte*)DG_ScreenBuffer) {
+        //    I_VideoBuffer = (byte*)DG_ScreenBuffer;
+
+        //    extern void AM_initVariables(void);
+        //    extern void R_InitBuffer(int width, int height);
+
+        //    AM_initVariables();
+        //    R_InitBuffer(SCREENWIDTH, SCREENHEIGHT);
+        //}
+
     }
 
     return 0;

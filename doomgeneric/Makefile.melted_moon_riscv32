@@ -15,6 +15,11 @@ RV32_ARCH_ABI_FLAGS:=
 #RV32_ARCH_ABI_FLAGS:=$(RV32_ARCH_ABI_FLAGS) -march=rv32im -mabi=ilp32
 #RV32_ARCH_ABI_FLAGS:=$(RV32_ARCH_ABI_FLAGS) -march=rv32im_zba -mabi=ilp32
 RV32_ARCH_ABI_FLAGS:=$(RV32_ARCH_ABI_FLAGS) -march=rv32im_zba_zicond -mabi=ilp32
+RV32_ARCH_ABI_FLAGS:=$(RV32_ARCH_ABI_FLAGS) -mtune=sifive-7-series
+RV32_ARCH_ABI_FLAGS:=$(RV32_ARCH_ABI_FLAGS) -mstrict-align
+RV32_ARCH_ABI_FLAGS:=$(RV32_ARCH_ABI_FLAGS) -mscalar-strict-align
+RV32_ARCH_ABI_FLAGS:=$(RV32_ARCH_ABI_FLAGS) -mno-csr-check
+RV32_ARCH_ABI_FLAGS:=$(RV32_ARCH_ABI_FLAGS) -momit-leaf-frame-pointer
 
 #RV32_ARCH_ABI_FLAGS:=$(RV32_ARCH_ABI_FLAGS) -march=rv32ima_zve64x -mabi=ilp32
 
@@ -32,12 +37,12 @@ RV32_CFLAGS:=$(RV32_CFLAGS) -DSKINNY_FS_BYTE_COUNT_TYPE=int
 RV32_CFLAGS:=$(RV32_CFLAGS) -DSKINNY_FS_DEBUG_OUT_OF_RANGE=1
 RV32_CFLAGS:=$(RV32_CFLAGS) -DMELTED_MOON_RISCV32=1
 RV32_CFLAGS:=$(RV32_CFLAGS) -specs=picolibc.specs
-RV32_CFLAGS:=$(RV32_CFLAGS) -mtune=sifive-7-series
 RV32_CFLAGS:=$(RV32_CFLAGS) -DCMAP256=1
 RV32_CFLAGS:=$(RV32_CFLAGS) -DDOOMGENERIC_RESX=320 -DDOOMGENERIC_RESY=200
+RV32_CFLAGS:=$(RV32_CFLAGS) -fschedule-insns
 
 RV32_ASFLAGS:=
-RV32_ASFLAGS:=$(RV32_ASFLAGS) -march=rv32im -mabi=ilp32
+RV32_ASFLAGS:=$(RV32_ASFLAGS) -march=rv32im_zba_zicond -mabi=ilp32 
 
 
 #if (($1 == 1)); then
@@ -94,7 +99,7 @@ LIBS:= -lc -lgcc -ldummyhost \
 	-T melted_moon_doom-riscv32.ld
 
 
-SRC_DOOM = dummy.c am_map.c doomdef.c doomstat.c dstrings.c d_event.c d_items.c d_iwad.c d_loop.c d_main.c d_mode.c d_net.c f_finale.c f_wipe.c g_game.c hu_lib.c hu_stuff.c info.c i_cdmus.c i_endoom.c i_joystick.c i_scale.c i_sound.c i_system.c i_timer.c memio.c m_argv.c m_bbox.c m_cheat.c m_config.c m_controls.c m_fixed.c m_menu.c m_misc.c m_random.c p_ceilng.c p_doors.c p_enemy.c p_floor.c p_inter.c p_lights.c p_map.c p_maputl.c p_mobj.c p_plats.c p_pspr.c p_saveg.c p_setup.c p_sight.c p_spec.c p_switch.c p_telept.c p_tick.c p_user.c r_bsp.c r_data.c r_draw.c r_main.c r_plane.c r_segs.c r_sky.c r_things.c sha1.c sounds.c statdump.c st_lib.c st_stuff.c s_sound.c tables.c v_video.c wi_stuff.c w_checksum.c w_file.c w_main.c w_wad.c z_zone.c w_file_stdc.c i_input.c i_video.c doomgeneric.c doomgeneric_melted_moon.c skinny_fs.c #doomgeneric_xlib.c
+SRC_DOOM = dummy.c am_map.c doomdef.c doomstat.c dstrings.c d_event.c d_items.c d_iwad.c d_loop.c d_main.c d_mode.c d_net.c f_finale.c f_wipe.c g_game.c hu_lib.c hu_stuff.c info.c i_cdmus.c i_endoom.c i_joystick.c i_scale.c i_sound.c i_system.c i_timer.c memio.c m_argv.c m_bbox.c m_cheat.c m_config.c m_controls.c m_fixed.c m_menu.c m_misc.c m_random.c p_ceilng.c p_doors.c p_enemy.c p_floor.c p_inter.c p_lights.c p_map.c p_maputl.c p_mobj.c p_plats.c p_pspr.c p_saveg.c p_setup.c p_sight.c p_spec.c p_switch.c p_telept.c p_tick.c p_user.c r_bsp.c r_data.c r_draw.c r_main.c r_plane.c r_segs.c r_sky.c r_things.c sha1.c sounds.c statdump.c st_lib.c st_stuff.c s_sound.c tables.c v_video.c wi_stuff.c w_checksum.c w_file.c w_main.c w_wad.c z_zone.c w_file_stdc.c i_input.c i_video.c doomgeneric.c doomgeneric_melted_moon.c melted_moon_div.c skinny_fs.c #doomgeneric_xlib.c
 SRC_RV32_ASM_DOOM = melted_moon_doom-asm_funcs-riscv32.s melted_moon_doom-incbin_wad-riscv32.s
 
 OBJS := $(SRC_DOOM:%.c=$(OBJDIR)/%.o)
@@ -116,7 +121,10 @@ clean:
 	rm -f $(OUTPUT_PREFIX).map
 
 $(OUTPUT_BIN): $(OUTPUT_ELF)
-	riscv32-unknown-elf-objcopy -O binary $(OUTPUT_ELF) $(OUTPUT_BIN)
+	riscv32-unknown-elf-objcopy -O binary $(OUTPUT_ELF) $(OUTPUT_BIN) \
+	&& size=$$(wc -c < $(OUTPUT_BIN) ) \
+	&& pad=$$(( (64 - size % 64) % 64 )) \
+	&& dd if=/dev/zero bs=1 count="$$pad" >> $(OUTPUT_BIN) 2>/dev/null
 
 $(OUTPUT_DIS): $(OUTPUT_ELF)
 	riscv32-unknown-elf-objdump -D $(OUTPUT_ELF) > $(OUTPUT_DIS)
